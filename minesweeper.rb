@@ -1,6 +1,9 @@
 require 'yaml'
 
 class Minesweeper
+  class BadMinesweeperInput < StandardError
+  end
+
   attr_accessor :board
 
   def initialize
@@ -43,13 +46,28 @@ class Minesweeper
       return
     end
 
-    y, x, f = input.split(',').map(&:to_i)
+    begin
+      y, x, f = parse_input(input)
+    rescue BadMinesweeperInput
+      puts "Invalid move. Try again:"
+      input = gets.strip.downcase
+      retry
+    end
 
     if f.nil?
       board.select_tile(x, y)
     else
       board.toggle_flag(x, y)
     end
+  end
+
+  def parse_input(input)
+    parsed_input = input.split(',').map(&:to_i)
+    raise BadMinesweeperInput if parsed_input.size < 2
+    raise BadMinesweeperInput unless parsed_input[0].between?(0,8)
+    raise BadMinesweeperInput unless parsed_input[1].between?(0,8)
+
+    parsed_input
   end
 
   def save
