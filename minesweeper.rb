@@ -1,14 +1,26 @@
+require 'yaml'
+
 class Minesweeper
-  attr_reader :board
+  attr_accessor :board
 
   def initialize
     @board = Board.new
+    play
   end
 
   def play
     puts "Welcome to Minesweeper"
+    puts "Save during any turn by typing 'save'"
+    puts "Load the last save now by typing 'load' now"
+    puts "Otherwise, hit enter to continue"
 
-    until board.over?
+    input = gets.chomp
+
+    if input == 'load'
+      self.board = self.load
+    end
+
+    until self.board.over?
       puts board.to_s
       play_move
     end
@@ -21,17 +33,34 @@ class Minesweeper
     end
   end
 
-  private
-
   def play_move
     puts "Pick a square (x, y, 'f'): "
-    y, x, f = gets.strip.split(',').map(&:to_i)
+    input = gets.strip.downcase
+
+    if input == 'save'
+      self.save
+      puts "Game saved"
+      return
+    end
+
+    y, x, f = input.split(',').map(&:to_i)
 
     if f.nil?
       board.select_tile(x, y)
     else
       board.toggle_flag(x, y)
     end
+  end
+
+  def save
+    File.open('save.yaml', 'w') do |f|
+      f.puts self.board.to_yaml
+    end
+  end
+
+  def load
+    load_data = File.open('./save.yaml')
+    YAML::load(load_data)
   end
 end
 
@@ -209,6 +238,6 @@ class Tile
 end
 
 if $PROGRAM_NAME == __FILE__
-  g = Minesweeper.new
-  g.play
+  Minesweeper.new
+
 end
