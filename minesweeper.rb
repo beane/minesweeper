@@ -1,7 +1,7 @@
 require 'debugger'
 
-class Game
-  attr_reader :board
+class Minesweeper
+  attr_reader :board, :still_alive
 
   def initialize
     @board = Board.new
@@ -9,16 +9,15 @@ class Game
   end
 
   def play_move
-    puts board
-    user_guess = "Pick a square (x,y): "
+    puts "Pick a square (x,y): "
     x, y = gets.strip.split(',').map(&:to_i)
 
-    @still_alive = board.reveal(x,y)
+    still_alive = board.reveal(x,y)
     puts "BOMB! You lose." unless still_alive
   end
 
   def play_flag
-    user_guess = "Pick a square (x,y): "
+    puts "Pick a square (x,y): "
     x, y = gets.strip.split(',').map(&:to_i)
 
     board.toggle_flag(x,y)
@@ -26,6 +25,10 @@ class Game
 
   def run
 
+  end
+
+  def to_s
+    board.to_s
   end
 end
 
@@ -94,8 +97,11 @@ class Board
   end
 
   def toggle_flag(x, y)
-    board[x][y] = UNEXPLORED if board[x][y] == FLAG
-    board[x][y] = FLAG if board[x][y] == UNEXPLORED
+    if board[x][y] == FLAG
+      board[x][y] = UNEXPLORED
+    elsif board[x][y] == UNEXPLORED
+      board[x][y] = FLAG
+    end
   end
 
   def won?
@@ -107,6 +113,10 @@ class Board
     end
 
     b == hidden_board
+  end
+
+  def to_s
+    board
   end
 
   private
@@ -163,9 +173,17 @@ class Array
 end
 
 if $PROGRAM_NAME == __FILE__
-  b = Board.new
-  b.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
-  b.board = ["*21F_____","12*1_____","_111111__", "11__1*1__", "F11121111", "221F1112F","*22111*21","2*1__1121","111____1*"]
-  puts b.won?
+  g = Minesweeper.new
+  # b.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
+  # b.board = ["*21F_____","12*1_____","_111111__", "11__1*1__", "F11121111", "221F1112F","*22111*21","2*1__1121","111____1*"]
   # puts b.board
+  p g
+  g.play_move
+  puts g.to_s
+
+  g.play_flag
+  puts g.to_s
+
+  g.play_flag
+  puts g.to_s
 end
