@@ -1,4 +1,3 @@
-require 'debugger'
 class Minesweeper
   attr_reader :board
 
@@ -17,10 +16,26 @@ class Minesweeper
     end
   end
 
+  def play
+    puts "Welcome to Minesweeper"
+
+    until board.over?
+      puts board.to_s
+      play_move
+    end
+
+    if board.won?
+      puts "Congratulations!!!111!!!ROFLCOPTERAIRFORCE"
+    else
+      puts "BOMB! You lose."
+    end
+  end
+
 end
 
 class Board
   attr_accessor :tiles
+  attr_reader :still_alive
 
   MOVES = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0],[1,1]]
 
@@ -74,17 +89,8 @@ class Board
     valid_moves
   end
 
-  def show_everything
-    tiles.each do |row|
-      row.each do |tile|
-        print "#{tile.adjacent_bombs}, "
-      end
-      puts
-    end
-  end
-
   def select_tile(x, y)
-    tile = tiles[x][x]
+    tile = tiles[x][y]
 
     if tile.bomb
       tile.state = :revealed
@@ -103,13 +109,30 @@ class Board
     end
   end
 
+  def won?
+    won = true
+    tiles.flatten.each do |tile|
+      if !tile.bomb && [:hidden, :flagged].include?(tile.state)
+        won = false
+      end
+    end
+
+    won
+  end
+
+  def over?
+    won? || !self.still_alive
+  end
+
   def to_s
     str = String.new
     tiles.each do |row|
       row.each do |tile|
 
         if tile.state == :revealed
-          if tile.adjacent_bombs > 0
+          if tile.bomb
+            str += "B, "
+          elsif tile.adjacent_bombs > 0
             str += "#{tile.adjacent_bombs}, "
           else
             str += "_, "
@@ -120,6 +143,24 @@ class Board
 
         elsif tile.state == :flagged
           str += "F, "
+        end
+      end
+      str += "\n"
+    end
+
+    str
+  end
+
+  def show_everything
+    str = String.new
+    tiles.each do |row|
+      row.each do |tile|
+        if tile.bomb
+          str += "B, "
+        elsif tile.adjacent_bombs > 0
+          str += "#{tile.adjacent_bombs}, "
+        else
+          str += "_, "
         end
       end
       str += "\n"
@@ -146,7 +187,6 @@ class Tile
   end
 
   def reveal
-    # debugger
     return if [:flagged, :revealed].include?(self.state) || self.bomb
 
     if self.adjacent_bombs > 0
@@ -164,8 +204,5 @@ end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
-  g.board.show_everything
-  g.play_move
-
-  puts g.board
+  g.play
 end
