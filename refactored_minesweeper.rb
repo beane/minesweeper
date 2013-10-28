@@ -26,6 +26,10 @@ class Board
         assign_adjacencies(x,y)
       end
     end
+
+    tiles.flatten.each { |tile| tile.find_adjacent_bombs }
+
+    @still_alive = true
   end
 
   def place_bombs
@@ -59,8 +63,44 @@ class Board
     valid_moves
   end
 
-  def display_tiles
-    tiles.each { |row| puts row.to_s }
+  def show_everything
+    tiles.each do |row|
+      row.each do |tile|
+        print "#{tile.adjacent_bombs}, "
+      end
+      puts
+    end
+  end
+
+  def select_tile(x, y)
+    tile = tiles[x][x]
+
+    if tile.bomb
+      tile.state = :revealed
+      @still_alive = false
+    else
+      tile.reveal
+    end
+  end
+
+  def to_s
+    str = String.new
+    tiles.each do |row|
+      row.each do |tile|
+        if tile.state == :revealed
+          if tile.adjacent_bombs > 0
+            str += "#{tile.adjacent_bombs}, "
+          else
+            str += "_, "
+          end
+        else
+          str += "*, "
+        end
+      end
+      str += "\n"
+    end
+
+    str
   end
 end
 
@@ -75,6 +115,28 @@ class Tile
     @display_value = {hidden: "*", flagged: "F", revealed: @adjacent_bombs.to_s}
   end
 
+  def find_adjacent_bombs
+    self.adjacent_tiles.each do |tile|
+      self.adjacent_bombs += 1 if tile.bomb
+    end
+  end
+
+  def reveal
+    # debugger
+    return if [:flagged, :revealed].include?(self.state) || self.bomb
+
+    if self.adjacent_bombs > 0
+      self.state = :revealed
+      return
+    end
+
+    self.state = :revealed
+
+    adjacent_tiles.each do |tile|
+      tile.reveal
+    end
+  end
+
   def to_s
     display_value[state]
   end
@@ -82,5 +144,11 @@ end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
-  g.board.display_tiles
+  g.board.show_everything
+  g.board.select_tile(1,1)
+
+  puts g.board
+
+  puts
+  g.board.show_everything
 end
