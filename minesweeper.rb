@@ -24,7 +24,7 @@ class Board
     place_numbers
   end
 
-  def reveal(x,y) # REFACTOR OR DIE!!!
+  def reveal(x, y) # REFACTOR OR DIE!!!
     ints = ('1'..'8').to_a
     hidden_square = hidden_board[x][y]
     return false if hidden_square == BOMB
@@ -60,6 +60,10 @@ class Board
       # show the number
 
     true
+  end
+
+  def flag(x, y)
+    board[x][y] = "F"
   end
 
   private
@@ -113,6 +117,7 @@ if $PROGRAM_NAME == __FILE__
   b = Board.new
   #b.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
   puts b.hidden_board
+  b.flag(2,3)
   b.reveal(3,3)
   puts
   puts b.board
