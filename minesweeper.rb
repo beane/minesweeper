@@ -24,7 +24,24 @@ class Minesweeper
   end
 
   def run
+    puts "Welcome to Minesweeper"
 
+    while still_alive
+      puts board.to_s
+      puts "Flag a square (0) or move (1): "
+      selection = gets.to_i
+
+      if selection == 0
+        play_flag
+      else
+        play_move
+      end
+
+      if board.won?
+        puts "Congratulations!!!111!!!ROFLCOPTERAIRFORCE"
+        return
+      end
+    end
   end
 
   def to_s
@@ -105,11 +122,19 @@ class Board
   end
 
   def won?
-    b = board.clone
-    b.each_with_index do |row, x|
+    b = []
+    board.each_with_index do |row, x|
+      new_row = []
+
       row.split("").each_with_index do |square, y|
-        b[x][y] = BOMB if square == FLAG or square == UNEXPLORED
+        if square == FLAG or square == UNEXPLORED
+          new_row << BOMB
+        else
+          new_row << square
+        end
       end
+
+      b << new_row.join('')
     end
 
     b == hidden_board
@@ -168,22 +193,11 @@ end
 
 class Array
   def clone
-    map { |el| el.is_a?(Array) ? el.clone : el }
+    map { |el| el.is_a?(Array) ? el.dup : el }
   end
 end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
-  # b.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
-  # b.board = ["*21F_____","12*1_____","_111111__", "11__1*1__", "F11121111", "221F1112F","*22111*21","2*1__1121","111____1*"]
-  # puts b.board
-  p g
-  g.play_move
-  puts g.to_s
-
-  g.play_flag
-  puts g.to_s
-
-  g.play_flag
-  puts g.to_s
+  g.run
 end
