@@ -1,3 +1,4 @@
+require 'debugger'
 class Board
   attr_accessor :hidden_board, :board
 
@@ -27,29 +28,28 @@ class Board
   def place_bombs
     10.times do |i|
       x, y = rand(9), rand(9)
-      until @hidden_board[x][y] == EMPTY
+      until hidden_board[x][y] == EMPTY
         x, y = rand(9), rand(9)
       end
 
-      @hidden_board[x][y] = BOMB
+      hidden_board[x][y] = BOMB
     end
   end
 
-  # def place_numbers
-#     hidden_board.dup.each_with_index do |row, row_index|
-#       row.each_with_index do |entry, col_index|
-#         bombs_near = 0
-#
-#       end
-#     end
-#   end
+  def place_numbers
+    hidden_board.dup.each_with_index do |row, x|
+      row.split('').each_with_index do |entry, y|
+        hidden_board[x][y] = count_bombs(x,y).to_s unless entry == BOMB
+      end
+    end
+  end
 
   def valid_moves(x,y) # returns an array of legal squares
     valid_moves = []
     MOVES.each do |x_inc,y_inc|
       new_x = x + x_inc
       new_y = y + y_inc
-      if new_x.between?(0,9) && new_y.between?(0, 9)
+      if new_x.between?(0,8) && new_y.between?(0, 8)
         valid_moves << [new_x, new_y]
       end
     end
@@ -71,11 +71,5 @@ end
 
 if $PROGRAM_NAME == __FILE__
   b = Board.new
-  b.place_bombs
-  puts b.hidden_board
-  p b.valid_moves(3,3)
-  p b.count_bombs(3,3)
-  p b.count_bombs(0,1)
-  p b.count_bombs(6,6)
-
+  p b.valid_moves(8,8)
 end
