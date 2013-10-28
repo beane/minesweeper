@@ -5,17 +5,6 @@ class Minesweeper
     @board = Board.new
   end
 
-  def play_move
-    puts "Pick a square (x, y, 'f'): "
-    x, y, f = gets.strip.split(',').map(&:to_i)
-
-    if f.nil?
-      board.select_tile(x, y)
-    else
-      board.toggle_flag(x, y)
-    end
-  end
-
   def play
     puts "Welcome to Minesweeper"
 
@@ -27,10 +16,23 @@ class Minesweeper
     if board.won?
       puts "Congratulations!!!111!!!ROFLCOPTERAIRFORCE"
     else
+      puts board.to_s
       puts "BOMB! You lose."
     end
   end
 
+  private
+
+  def play_move
+    puts "Pick a square (x, y, 'f'): "
+    y, x, f = gets.strip.split(',').map(&:to_i)
+
+    if f.nil?
+      board.select_tile(x, y)
+    else
+      board.toggle_flag(x, y)
+    end
+  end
 end
 
 class Board
@@ -46,16 +48,19 @@ class Board
     end
 
     place_bombs
+    link_tiles
 
+    tiles.flatten.each { |tile| tile.find_adjacent_bombs }
+
+    @still_alive = true
+  end
+
+  def link_tiles
     (0..8).each do |x|
       (0..8).each do |y|
         assign_adjacencies(x,y)
       end
     end
-
-    tiles.flatten.each { |tile| tile.find_adjacent_bombs }
-
-    @still_alive = true
   end
 
   def place_bombs
