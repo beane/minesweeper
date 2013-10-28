@@ -125,30 +125,31 @@ class Board
   end
 
   def to_s
-    str = String.new
-    tiles.each do |row|
+    str = "|   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |\n"
+    str += "|   |-----------------------------------|\n"
+    tiles.each_with_index do |row, index|
+      str += "| #{index} | "
       row.each do |tile|
-
         if tile.state == :revealed
           if tile.bomb
-            str += "B, "
+            str += "B | "
           elsif tile.adjacent_bombs > 0
-            str += "#{tile.adjacent_bombs}, "
+            str += "#{tile.adjacent_bombs} | "
           else
-            str += "_, "
+            str += "_ | "
           end
 
         elsif tile.state == :hidden
-          str += "*, "
+          str += "* | "
 
         elsif tile.state == :flagged
-          str += "F, "
+          str += "F | "
         end
       end
-      str += "\n"
+      str = "#{str.strip}\n"
     end
 
-    str
+    str.chop
   end
 
   def show_everything
