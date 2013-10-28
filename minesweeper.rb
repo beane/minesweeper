@@ -20,10 +20,10 @@ class Board
     @board = Array.new(9) {EMPTY * 9}
     @hidden_board = Array.new(9) {EMPTY * 9}
     place_bombs
-    # place_numbers
+    place_numbers
   end
 
-  # private
+  private
 
   def place_bombs
     10.times do |i|
@@ -71,5 +71,5 @@ end
 
 if $PROGRAM_NAME == __FILE__
   b = Board.new
-  p b.valid_moves(8,8)
+  puts b.hidden_board
 end
