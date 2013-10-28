@@ -1,19 +1,17 @@
 require 'debugger'
 
 class Minesweeper
-  attr_reader :board, :still_alive
+  attr_reader :board
 
   def initialize
     @board = Board.new
-    @still_alive = true
   end
 
   def play_move
     puts "Pick a square (x,y): "
     x, y = gets.strip.split(',').map(&:to_i)
 
-    still_alive = board.reveal(x,y)
-    puts "BOMB! You lose." unless still_alive
+    board.select_square(x,y)
   end
 
   def play_flag
@@ -26,8 +24,9 @@ class Minesweeper
   def run
     puts "Welcome to Minesweeper"
 
-    while still_alive
+    until board.over?
       puts board.to_s
+
       puts "Flag a square (0) or move (1): "
       selection = gets.to_i
 
@@ -36,11 +35,12 @@ class Minesweeper
       else
         play_move
       end
+    end
 
-      if board.won?
-        puts "Congratulations!!!111!!!ROFLCOPTERAIRFORCE"
-        return
-      end
+    if board.won?
+      puts "Congratulations!!!111!!!ROFLCOPTERAIRFORCE"
+    else
+      puts "BOMB! You lose."
     end
   end
 
@@ -50,7 +50,7 @@ class Minesweeper
 end
 
 class Board
-  attr_accessor :hidden_board, :board
+  attr_accessor :hidden_board, :board, :still_alive
 
   MOVES = [
     [-1,-1],
@@ -71,6 +71,7 @@ class Board
   def initialize
     @board = Array.new(9) {UNEXPLORED * 9}
     @hidden_board = Array.new(9) {UNEXPLORED * 9}
+    @still_alive = true
     place_bombs
     place_numbers
   end
@@ -121,6 +122,10 @@ class Board
     end
   end
 
+  def over?
+    !still_alive || won?
+  end
+
   def won?
     b = []
     board.each_with_index do |row, x|
@@ -138,6 +143,15 @@ class Board
     end
 
     b == hidden_board
+  end
+
+  def select_square(x,y)
+    if board[x][y] == BOMB
+      still_alive = false
+      board[x][y] = BOMB
+    else
+      reveal(x,y)
+    end
   end
 
   def to_s
