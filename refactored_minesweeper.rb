@@ -1,3 +1,4 @@
+require 'debugger'
 class Minesweeper
   attr_reader :board
 
@@ -10,12 +11,21 @@ end
 class Board
   attr_accessor :tiles
 
+  MOVES = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0],[1,1]]
+
   def initialize
     @tiles = Array.new(9) {Array.new * 9}
     @tiles.each do |row|
       9.times { row << Tile.new }
     end
+
     place_bombs
+
+    (0..8).each do |x|
+      (0..8).each do |y|
+        calculate_adjacencies(x,y)
+      end
+    end
   end
 
   def place_bombs
@@ -28,6 +38,28 @@ class Board
       tiles[x][y].bomb = true
     end
   end
+
+  def valid_moves(x,y) # returns an array of legal squares
+    valid_moves = []
+    MOVES.each do |x_inc,y_inc|
+      new_x = x + x_inc
+      new_y = y + y_inc
+      if new_x.between?(0,8) && new_y.between?(0, 8)
+        valid_moves << [new_x, new_y]
+      end
+    end
+
+    valid_moves
+  end
+
+  def calculate_adjacencies(x,y)
+    # debugger
+    tile = tiles[x][y]
+    valid_moves(x,y).each do |pos|
+      tile.adjacent_tiles << tiles[pos[0]][pos[1]]
+    end
+  end
+
 end
 
 class Tile
@@ -39,13 +71,9 @@ class Tile
     @adjacent_tiles = []
     @adjacent_bombs = 0
   end
-
-  def to_s
-    bomb.to_s
-  end
 end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
-  p g.board
+  g.board.tiles
 end
