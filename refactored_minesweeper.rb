@@ -23,7 +23,7 @@ class Board
 
     (0..8).each do |x|
       (0..8).each do |y|
-        calculate_adjacencies(x,y)
+        assign_adjacencies(x,y)
       end
     end
   end
@@ -36,6 +36,13 @@ class Board
       end
 
       tiles[x][y].bomb = true
+    end
+  end
+
+  def assign_adjacencies(x,y)
+    tile = tiles[x][y]
+    valid_moves(x,y).each do |pos|
+      tile.adjacent_tiles << tiles[pos[0]][pos[1]]
     end
   end
 
@@ -52,28 +59,28 @@ class Board
     valid_moves
   end
 
-  def calculate_adjacencies(x,y)
-    # debugger
-    tile = tiles[x][y]
-    valid_moves(x,y).each do |pos|
-      tile.adjacent_tiles << tiles[pos[0]][pos[1]]
-    end
+  def display_tiles
+    tiles.each { |row| puts row.to_s }
   end
-
 end
 
 class Tile
-  attr_accessor :bomb, :state, :adjacent_tiles, :adjacent_bombs
+  attr_accessor :bomb, :state, :adjacent_tiles, :adjacent_bombs, :display_value
 
   def initialize
     @state = :hidden # or :flagged or :revealed
     @bomb = false
     @adjacent_tiles = []
     @adjacent_bombs = 0
+    @display_value = {hidden: "*", flagged: "F", revealed: @adjacent_bombs.to_s}
+  end
+
+  def to_s
+    display_value[state]
   end
 end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
-  g.board.tiles
+  g.board.display_tiles
 end
