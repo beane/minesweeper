@@ -1,4 +1,34 @@
 require 'debugger'
+
+class Game
+  attr_reader :board
+
+  def initialize
+    @board = Board.new
+    @still_alive = true
+  end
+
+  def play_move
+    puts board
+    user_guess = "Pick a square (x,y): "
+    x, y = gets.strip.split(',').map(&:to_i)
+
+    @still_alive = board.reveal(x,y)
+    puts "BOMB! You lose." unless still_alive
+  end
+
+  def play_flag
+    user_guess = "Pick a square (x,y): "
+    x, y = gets.strip.split(',').map(&:to_i)
+
+    board.toggle_flag(x,y)
+  end
+
+  def run
+
+  end
+end
+
 class Board
   attr_accessor :hidden_board, :board
 
@@ -16,6 +46,7 @@ class Board
   BOMB = "B"
   UNEXPLORED = "*"
   NO_BOMBS = '_'
+  FLAG = "F"
 
   def initialize
     @board = Array.new(9) {UNEXPLORED * 9}
@@ -62,8 +93,20 @@ class Board
     true
   end
 
-  def flag(x, y)
-    board[x][y] = "F"
+  def toggle_flag(x, y)
+    board[x][y] = UNEXPLORED if board[x][y] == FLAG
+    board[x][y] = FLAG if board[x][y] == UNEXPLORED
+  end
+
+  def won?
+    b = board.clone
+    b.each_with_index do |row, x|
+      row.split("").each_with_index do |square, y|
+        b[x][y] = BOMB if square == FLAG or square == UNEXPLORED
+      end
+    end
+
+    b == hidden_board
   end
 
   private
@@ -113,12 +156,16 @@ class Board
   end
 end
 
+class Array
+  def clone
+    map { |el| el.is_a?(Array) ? el.clone : el }
+  end
+end
+
 if $PROGRAM_NAME == __FILE__
   b = Board.new
-  #b.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
-  puts b.hidden_board
-  b.flag(2,3)
-  b.reveal(3,3)
-  puts
-  puts b.board
+  b.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
+  b.board = ["*21F_____","12*1_____","_111111__", "11__1*1__", "F11121111", "221F1112F","*22111*21","2*1__1121","111____1*"]
+  puts b.won?
+  # puts b.board
 end
