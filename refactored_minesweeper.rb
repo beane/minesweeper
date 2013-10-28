@@ -83,18 +83,32 @@ class Board
     end
   end
 
+  def toggle_flag(x, y)
+    if tiles[x][y].state == :flagged
+      tiles[x][y].state = :hidden
+
+    elsif tiles[x][y].state = :hidden
+      tiles[x][y].state = :flagged
+    end
+  end
+
   def to_s
     str = String.new
     tiles.each do |row|
       row.each do |tile|
+
         if tile.state == :revealed
           if tile.adjacent_bombs > 0
             str += "#{tile.adjacent_bombs}, "
           else
             str += "_, "
           end
-        else
+
+        elsif tile.state == :hidden
           str += "*, "
+
+        elsif tile.state == :flagged
+          str += "F, "
         end
       end
       str += "\n"
@@ -112,7 +126,6 @@ class Tile
     @bomb = false
     @adjacent_tiles = []
     @adjacent_bombs = 0
-    @display_value = {hidden: "*", flagged: "F", revealed: @adjacent_bombs.to_s}
   end
 
   def find_adjacent_bombs
@@ -136,19 +149,13 @@ class Tile
       tile.reveal
     end
   end
-
-  def to_s
-    display_value[state]
-  end
 end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
   g.board.show_everything
-  g.board.select_tile(1,1)
-
+  g.board.toggle_flag(1,1)
+  g.board.toggle_flag(1,1)
+  # WHEEE EVERYTHING WORKS BITCHES
   puts g.board
-
-  puts
-  g.board.show_everything
 end
