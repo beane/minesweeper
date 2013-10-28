@@ -2,7 +2,7 @@ class Board
   attr_accessor :hidden_board, :board
 
   MOVES = [
-    [-1,1],
+    [-1,-1],
     [-1,0],
     [-1,1],
     [0,-1],
@@ -12,9 +12,12 @@ class Board
     [1,1]
   ]
 
+  BOMB = "B"
+  EMPTY = "*"
+
   def initialize
-    @board = Array.new(9) {"*" * 9}
-    @hidden_board = Array.new(9) {"*" * 9}
+    @board = Array.new(9) {EMPTY * 9}
+    @hidden_board = Array.new(9) {EMPTY * 9}
     place_bombs
     # place_numbers
   end
@@ -24,11 +27,11 @@ class Board
   def place_bombs
     10.times do |i|
       x, y = rand(9), rand(9)
-      until @hidden_board[x][y] == "*"
+      until @hidden_board[x][y] == EMPTY
         x, y = rand(9), rand(9)
       end
 
-      @hidden_board[x][y] = "B"
+      @hidden_board[x][y] = BOMB
     end
   end
 
@@ -54,15 +57,25 @@ class Board
     valid_moves
   end
 
-#   def count_bombs(x,y) # takes the results of valid_moves and counts the bombs
-#
-#   end
+  def count_bombs(x,y) # takes the results of valid_moves and counts the bombs
+    bombs = 0
+
+    valid_moves(x,y).each do |coord_pair|
+      test_x, test_y = coord_pair
+      bombs += 1 if hidden_board[test_x][test_y] == BOMB
+    end
+
+    bombs
+  end
 end
 
 if $PROGRAM_NAME == __FILE__
   b = Board.new
   b.place_bombs
-  p b.valid_moves(0,0)
+  puts b.hidden_board
   p b.valid_moves(3,3)
-  p b.valid_moves(0,3)
+  p b.count_bombs(3,3)
+  p b.count_bombs(0,1)
+  p b.count_bombs(6,6)
+
 end
