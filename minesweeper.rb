@@ -1,40 +1,27 @@
-require 'debugger'
-
 class Minesweeper
-  attr_accessor :board
+  attr_reader :board
 
   def initialize
     @board = Board.new
   end
 
   def play_move
-    puts "Pick a square (x,y): "
-    x, y = gets.strip.split(',').map(&:to_i)
+    puts "Pick a square (x, y, 'f'): "
+    x, y, f = gets.strip.split(',').map(&:to_i)
 
-    board.select_square(x,y)
+    if f.nil?
+      board.select_tile(x, y)
+    else
+      board.toggle_flag(x, y)
+    end
   end
 
-  def play_flag
-    puts "Pick a square (x,y): "
-    x, y = gets.strip.split(',').map(&:to_i)
-
-    board.toggle_flag(x,y)
-  end
-
-  def run
+  def play
     puts "Welcome to Minesweeper"
 
     until board.over?
       puts board.to_s
-
-      puts "Flag a square (0) or move (1): "
-      selection = gets.to_i
-
-      if selection == 0
-        play_flag
-      else
-        play_move
-      end
+      play_move
     end
 
     if board.won?
@@ -44,138 +31,48 @@ class Minesweeper
     end
   end
 
-  def to_s
-    board.to_s
-  end
 end
 
 class Board
-  attr_accessor :hidden_board, :board, :still_alive
+  attr_accessor :tiles
+  attr_reader :still_alive
 
-  MOVES = [
-    [-1,-1],
-    [-1,0],
-    [-1,1],
-    [0,-1],
-    [0,1],
-    [1,-1],
-    [1,0],
-    [1,1]
-  ]
-
-  BOMB = "B"
-  UNEXPLORED = "*"
-  NO_BOMBS = '_'
-  FLAG = "F"
+  MOVES = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0],[1,1]]
 
   def initialize
-    @board = Array.new(9) {UNEXPLORED * 9}
-    @hidden_board = Array.new(9) {UNEXPLORED * 9}
-    @still_alive = true
+    @tiles = Array.new(9) {Array.new * 9}
+    @tiles.each do |row|
+      9.times { row << Tile.new }
+    end
+
     place_bombs
-    place_numbers
-  end
 
-  def reveal(x, y) # REFACTOR OR DIE!!!
-    ints = ('1'..'8').to_a
-    hidden_square = hidden_board[x][y]
-    return false if hidden_square == BOMB
-
-    if ints.include?(hidden_square)
-      board[x][y] = hidden_square
-      return true
-    end
-
-    squares_to_reveal = [[x,y]]
-
-    until squares_to_reveal.empty?
-      x1, y1 = squares_to_reveal.shift
-      hidden_square = hidden_board[x1][y1]
-
-      board[x1][y1] = hidden_square
-
-      valid_moves(x1,y1).each do |square|
-        x2, y2 = square
-        board_square = board[x2][y2]
-        hidden_square = hidden_board[x2][y2]
-
-        next if hidden_square == BOMB
-        next unless board_square == UNEXPLORED
-
-        squares_to_reveal << [x2,y2] if hidden_square == '_'
-        board[x2][y2] = hidden_square if ints.include?(hidden_square)
+    (0..8).each do |x|
+      (0..8).each do |y|
+        assign_adjacencies(x,y)
       end
     end
 
-      # if you try to reveal a square with a number in it,
-      # you will just change the board at those coordinates to
-      # show the number
+    tiles.flatten.each { |tile| tile.find_adjacent_bombs }
 
-    true
+    @still_alive = true
   end
-
-  def toggle_flag(x, y)
-    if board[x][y] == FLAG
-      board[x][y] = UNEXPLORED
-    elsif board[x][y] == UNEXPLORED
-      board[x][y] = FLAG
-    end
-  end
-
-  def over?
-    !still_alive || won?
-  end
-
-  def won?
-    b = []
-    board.each_with_index do |row, x|
-      new_row = []
-
-      row.split("").each_with_index do |square, y|
-        if square == FLAG or square == UNEXPLORED
-          new_row << BOMB
-        else
-          new_row << square
-        end
-      end
-
-      b << new_row.join('')
-    end
-
-    b == hidden_board
-  end
-
-  def select_square(x,y)
-    if hidden_board[x][y] == BOMB
-      @still_alive = false
-      board[x][y] = BOMB
-    else
-      reveal(x,y)
-    end
-  end
-
-  def to_s
-    board
-  end
-
-  private
 
   def place_bombs
-    10.times do |i|
+    10.times do
       x, y = rand(9), rand(9)
-      until hidden_board[x][y] == UNEXPLORED
+      until tiles[x][y].bomb == false
         x, y = rand(9), rand(9)
       end
 
-      hidden_board[x][y] = BOMB
+      tiles[x][y].bomb = true
     end
   end
 
-  def place_numbers
-    hidden_board.dup.each_with_index do |row, x|
-      row.split('').each_with_index do |entry, y|
-        hidden_board[x][y] = count_bombs(x,y).to_s unless entry == BOMB
-      end
+  def assign_adjacencies(x,y)
+    tile = tiles[x][y]
+    valid_moves(x,y).each do |pos|
+      tile.adjacent_tiles << tiles[pos[0]][pos[1]]
     end
   end
 
@@ -192,28 +89,120 @@ class Board
     valid_moves
   end
 
-  def count_bombs(x,y) # takes the results of valid_moves and counts the bombs
-    bombs = 0
+  def select_tile(x, y)
+    tile = tiles[x][y]
 
-    valid_moves(x,y).each do |coord_pair|
-      test_x, test_y = coord_pair
-      bombs += 1 if hidden_board[test_x][test_y] == BOMB
+    if tile.bomb
+      tile.state = :revealed
+      @still_alive = false
+    else
+      tile.reveal
+    end
+  end
+
+  def toggle_flag(x, y)
+    if tiles[x][y].state == :flagged
+      tiles[x][y].state = :hidden
+
+    elsif tiles[x][y].state = :hidden
+      tiles[x][y].state = :flagged
+    end
+  end
+
+  def won?
+    won = true
+    tiles.flatten.each do |tile|
+      if !tile.bomb && [:hidden, :flagged].include?(tile.state)
+        won = false
+      end
     end
 
-    return NO_BOMBS if bombs == 0
-    bombs
+    won
+  end
+
+  def over?
+    won? || !self.still_alive
+  end
+
+  def to_s
+    str = String.new
+    tiles.each do |row|
+      row.each do |tile|
+
+        if tile.state == :revealed
+          if tile.bomb
+            str += "B, "
+          elsif tile.adjacent_bombs > 0
+            str += "#{tile.adjacent_bombs}, "
+          else
+            str += "_, "
+          end
+
+        elsif tile.state == :hidden
+          str += "*, "
+
+        elsif tile.state == :flagged
+          str += "F, "
+        end
+      end
+      str += "\n"
+    end
+
+    str
+  end
+
+  def show_everything
+    str = String.new
+    tiles.each do |row|
+      row.each do |tile|
+        if tile.bomb
+          str += "B, "
+        elsif tile.adjacent_bombs > 0
+          str += "#{tile.adjacent_bombs}, "
+        else
+          str += "_, "
+        end
+      end
+      str += "\n"
+    end
+
+    str
   end
 end
 
-class Array
-  def clone
-    map { |el| el.is_a?(Array) ? el.dup : el }
+class Tile
+  attr_accessor :bomb, :state, :adjacent_tiles, :adjacent_bombs, :display_value
+
+  def initialize
+    @state = :hidden # or :flagged or :revealed
+    @bomb = false
+    @adjacent_tiles = []
+    @adjacent_bombs = 0
+  end
+
+  def find_adjacent_bombs
+    self.adjacent_tiles.each do |tile|
+      self.adjacent_bombs += 1 if tile.bomb
+    end
+  end
+
+  def reveal
+    return if [:flagged, :revealed].include?(self.state) || self.bomb
+
+    if self.adjacent_bombs > 0
+      self.state = :revealed
+      return
+    end
+
+    self.state = :revealed
+
+    adjacent_tiles.each do |tile|
+      tile.reveal
+    end
   end
 end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
-  g.board.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
-  g.board.board = ["*211_____","1**1_____","_111111__", "11__1*1__", "*11121111", "221*1112*","*22111*21","2*1__1121","111____1*"]
-  g.run
+  g.play
 end
