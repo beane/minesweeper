@@ -6,6 +6,17 @@ class Minesweeper
     @board = Board.new
   end
 
+  def play_move
+    puts "Pick a square (x, y, 'f'): "
+    x, y, f = gets.strip.split(',').map(&:to_i)
+
+    if f.nil?
+      board.select_tile(x, y)
+    else
+      board.toggle_flag(x, y)
+    end
+  end
+
 end
 
 class Board
@@ -154,8 +165,7 @@ end
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
   g.board.show_everything
-  g.board.toggle_flag(1,1)
-  g.board.toggle_flag(1,1)
-  # WHEEE EVERYTHING WORKS BITCHES
+  g.play_move
+
   puts g.board
 end
