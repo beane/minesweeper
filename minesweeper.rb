@@ -1,7 +1,7 @@
 require 'debugger'
 
 class Minesweeper
-  attr_reader :board
+  attr_accessor :board
 
   def initialize
     @board = Board.new
@@ -146,8 +146,8 @@ class Board
   end
 
   def select_square(x,y)
-    if board[x][y] == BOMB
-      still_alive = false
+    if hidden_board[x][y] == BOMB
+      @still_alive = false
       board[x][y] = BOMB
     else
       reveal(x,y)
@@ -213,5 +213,7 @@ end
 
 if $PROGRAM_NAME == __FILE__
   g = Minesweeper.new
+  g.board.hidden_board = ["B211_____","12B1_____","_111111__", "11__1B1__", "B11121111", "221B1112B","B22111B21","2B1__1121","111____1B"]
+  g.board.board = ["*211_____","1**1_____","_111111__", "11__1*1__", "*11121111", "221*1112*","*22111*21","2*1__1121","111____1*"]
   g.run
 end
