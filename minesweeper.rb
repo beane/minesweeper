@@ -257,5 +257,4 @@ end
 
 if $PROGRAM_NAME == __FILE__
   Minesweeper.new
-
 end
