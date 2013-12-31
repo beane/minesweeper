@@ -1,4 +1,4 @@
-minesweeper
+Minesweeper
 ===========
 
 ## Gameplay
